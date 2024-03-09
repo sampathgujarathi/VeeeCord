@@ -15,12 +15,15 @@ import { Devs } from "@utils/constants";
 import { Margins } from "@utils/margins";
 import { copyWithToast } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
-import { Button, Forms, Tooltip } from "@webpack/common";
+import { findByPropsLazy } from "@webpack";
+import { Button, Forms, Tooltip, useEffect, useState } from "@webpack/common";
 import { User } from "discord-types/general";
 import virtualMerge from "virtual-merge";
 
-import style from "./index.css?managed";
+const { isAnimatedAvatarDecoration } = findByPropsLazy("isAnimatedAvatarDecoration");
 
+import style from "./index.css?managed";
+const SKU_ID = "100101099222224";
 
 type Badge = {
     id: string;
@@ -28,6 +31,10 @@ type Badge = {
     icon: string;
     link?: string;
 };
+export interface AvatarDecoration {
+    asset: string;
+    skuId: string;
+}
 interface UserProfile extends User {
     profileEffectId: string;
     userId: string;
@@ -38,6 +45,7 @@ interface UserProfileData {
     banner: string;
     avatar: string;
     badges: Badge[];
+    decoration: string;
 }
 
 
@@ -161,6 +169,11 @@ const settings = definePluginSettings({
         default: false,
         restartNeeded: true
     },
+    enableAvatarDecorations: {
+        description: "Allows you to use discord avatar decorations",
+        type: OptionType.BOOLEAN,
+        default: false
+    },
     showCustomBadgesinmessage: {
         description: "Show custom badges in message",
         type: OptionType.BOOLEAN,
@@ -201,6 +214,8 @@ const BadgeIcon = ({ user, badgeImg, badgeText }: { user: User, badgeImg: string
     }
 };
 
+
+
 const BadgeMain = ({ user, wantMargin = true, wantTopMargin = false }: { user: User; wantMargin?: boolean; wantTopMargin?: boolean; }) => {
 
     const validBadges = UsersData[user.id]?.badges;
@@ -239,7 +254,7 @@ const BadgeMain = ({ user, wantMargin = true, wantTopMargin = false }: { user: U
 
 export default definePlugin({
     name: "fakeProfile",
-    description: "Unlock Discord profile effects, themes, and custom badges without the need for Nitro.",
+    description: "Unlock Discord profile effects, themes, avatar decorations, and custom badges without the need for Nitro.",
     authors: [Devs.Sampath, Devs.Alyxia, Devs.Remty, Devs.AutumnVN, Devs.pylix, Devs.TheKodeToad],
     dependencies: ["MessageDecorationsAPI"],
     async start() {
@@ -267,6 +282,13 @@ export default definePlugin({
             replacement: {
                 match: /(?<=getUserProfile\(\i\){return )(\i\[\i\])/,
                 replace: "$self.profileDecodeHook($1)"
+            }
+        },
+        {
+            find: "getAvatarDecorationURL:",
+            replacement: {
+                match: /(?<=function \i\(\i\){)(?=let{avatarDecoration)/,
+                replace: "const vcDecoration = (() => { console.log('Calling getAvatarDecorationURL with:', arguments[0]); return $self.getAvatarDecorationURL(arguments[0]); })(); if (vcDecoration) return vcDecoration;"
             }
         },
         {
@@ -313,6 +335,37 @@ export default definePlugin({
                 {
                     match: /(getUserAvatarURL:\i\(\){return )(\i)}/,
                     replace: "$1$self.getAvatarHook($2)}"
+                }
+            ]
+        },
+        {
+            find: "isAvatarDecorationAnimating:",
+            group: true,
+            replacement: [
+                // Add Decor avatar decoration hook to avatar decoration hook
+                {
+                    match: /(?<=TryItOut:\i,guildId:\i}\),)(?<=user:(\i).+?)/,
+                    replace: "vcAvatarDecoration=$self.useUserAvatarDecoration($1),"
+                },
+                // Use added hook
+                {
+                    match: /(?<={avatarDecoration:).{1,20}?(?=,)(?<=avatarDecorationOverride:(\i).+?)/,
+                    replace: "$1??vcAvatarDecoration??($&)"
+                },
+                // Make memo depend on added hook
+                {
+                    match: /(?<=size:\i}\),\[)/,
+                    replace: "vcAvatarDecoration,"
+                }
+            ]
+        },
+        {
+            find: "renderAvatarWithPopout(){",
+            replacement: [
+                // Use Decor avatar decoration hook
+                {
+                    match: /(?<=getAvatarDecorationURL\)\({avatarDecoration:)(\i).avatarDecoration(?=,)/,
+                    replace: "$self.useUserAvatarDecoration($1)??$&"
                 }
             ]
         }
@@ -363,6 +416,29 @@ export default definePlugin({
 
         return user;
     },
+    SKU_ID,
+    useUserAvatarDecoration(user?: User): { asset: string; skuId: string; } | null | undefined {
+        if (!user || !settings.store.enableAvatarDecorations) return;
+        const [AvatarDecoration, setAvatarDecoration] = useState<string | null>(
+            user ? UsersData[user.id]?.decoration ?? null : null
+        );
+
+        useEffect(() => {
+            const fetchUserAssets = async () => {
+                try {
+                    const userAssetsData = UsersData[user.id];
+                    if (userAssetsData?.decoration) {
+                        setAvatarDecoration(userAssetsData.decoration);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user assets:", error);
+                }
+            };
+            fetchUserAssets();
+        }, [user]);
+
+        return AvatarDecoration ? { asset: AvatarDecoration, skuId: SKU_ID } : null;
+    },
     voiceBackgroundHook({ className, participantUserId }: any) {
         if (className.includes("tile_")) {
             if (UsersData[participantUserId]) {
@@ -392,6 +468,15 @@ export default definePlugin({
         if (!settings.store.nitroFirst && user.avatar?.startsWith("a_")) return original(user, animated, size);
 
         return UsersData[user.id]?.avatar ?? original(user, animated, size);
+    },
+    getAvatarDecorationURL({ avatarDecoration, canAnimate }: { avatarDecoration: AvatarDecoration | null; canAnimate?: boolean; }) {
+        if (!avatarDecoration || !settings.store.enableAvatarDecorations) return;
+        if (avatarDecoration && canAnimate) {
+            const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png`);
+            return url.toString();
+        }
+        const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png?passthrough=false`);
+        return url.toString();
     },
     commands: [
         {

@@ -41,7 +41,7 @@ ___
  - Choose custom badges
  - Choose profile effect (Without Nitro)
  - Choose profile theme colors (Without Nitro)
- - Choose custom decoration (Coming Soon...)
+ - Choose custom decoration (Without Nitro)
  - Reload database without restart client (This plugin used `/reload` to reload database)
 
 
@@ -138,6 +138,17 @@ ___
 
  - Used `/reload` to reload database and done.
 
+ ### 6. How to choose a avatar decorations?
+ - Goto [#commands](https://discord.com/channels/1117373291095662623/1215640671457771540)
+ - Used command `/profile decorations` like this:
+
+  <img src="https://i.imgur.com/bXzsYId.png" alt="avatar decorations">
+
+ - Choose a effect and click **`Apply`** button
+
+  <img src="https://i.imgur.com/bXzsYId.png" alt="avatar decorations preview">
+
+ - After that used `/reload` to reload database and enjoy.
 
 
 ## ❔QnA
