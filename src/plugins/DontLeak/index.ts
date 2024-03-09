@@ -1,8 +1,16 @@
-import { Devs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
-import styles from "./style.css?managed";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2024 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { definePluginSettings } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
+import { Devs } from "@utils/constants";
+import { Devs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
+
+import styles from "./style.css?managed";
 
 const settings = definePluginSettings({
     hoverToView: {
@@ -35,10 +43,7 @@ export default definePlugin({
     name: "Don't Leak!",
     description: "Hide all message contents and attachments when you're streaming or sharing your screen.",
     authors: [
-        {
-            id: 1101508982570504244n,
-            name: "Perny",
-        },
+        Devs.Perny,
     ],
     settings,
     start() {
