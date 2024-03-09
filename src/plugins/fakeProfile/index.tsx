@@ -288,7 +288,7 @@ export default definePlugin({
             find: "getAvatarDecorationURL:",
             replacement: {
                 match: /(?<=function \i\(\i\){)(?=let{avatarDecoration)/,
-                replace: "const vcDecoration = (() => { console.log('Calling getAvatarDecorationURL with:', arguments[0]); return $self.getAvatarDecorationURL(arguments[0]); })(); if (vcDecoration) return vcDecoration;"
+                replace: "const vcDecoration = (() => { return $self.getAvatarDecorationURL(arguments[0]); })(); if (vcDecoration) return vcDecoration;"
             }
         },
         {
