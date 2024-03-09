@@ -5,22 +5,24 @@
  */
 
 import { addBadge, BadgePosition, ProfileBadge, removeBadge } from "@api/Badges";
-import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 import { addDecoration, removeDecoration } from "@api/MessageDecorations";
 import { definePluginSettings } from "@api/Settings";
-import { enableStyle } from "@api/Styles";
+import { classNameFactory, enableStyle } from "@api/Styles";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { Flex } from "@components/Flex";
 import { Link } from "@components/Link";
 import { Devs } from "@utils/constants";
 import { Margins } from "@utils/margins";
 import { copyWithToast } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy } from "@webpack";
+import { findByCodeLazy, findByPropsLazy } from "@webpack";
 import { Button, Forms, Tooltip, useEffect, useState } from "@webpack/common";
 import { User } from "discord-types/general";
 import virtualMerge from "virtual-merge";
 
 const { isAnimatedAvatarDecoration } = findByPropsLazy("isAnimatedAvatarDecoration");
+const CustomizationSection = findByCodeLazy(".customizationSectionBackground");
+const cl = classNameFactory("vc-decoration-");
 
 import style from "./index.css?managed";
 const SKU_ID = "100101099222224";
@@ -172,7 +174,8 @@ const settings = definePluginSettings({
     enableAvatarDecorations: {
         description: "Allows you to use discord avatar decorations",
         type: OptionType.BOOLEAN,
-        default: false
+        default: false,
+        restartNeeded: true
     },
     showCustomBadgesinmessage: {
         description: "Show custom badges in message",
@@ -296,6 +299,13 @@ export default definePlugin({
             replacement: {
                 match: /RESET_PROFILE_THEME}\)(?<=color:(\i),.{0,500}?color:(\i),.{0,500}?)/,
                 replace: "$&,$self.addCopy3y3Button({primary:$1,accent:$2})"
+            }
+        },
+        {
+            find: "DefaultCustomizationSections",
+            replacement: {
+                match: /(?<={user:\i},"decoration"\),)/,
+                replace: "$self.DecorationSection(),"
             }
         },
         {
@@ -435,7 +445,7 @@ export default definePlugin({
                 }
             };
             fetchUserAssets();
-        }, [user]);
+        }, [user, UsersData]);
 
         return AvatarDecoration ? { asset: AvatarDecoration, skuId: SKU_ID } : null;
     },
@@ -478,20 +488,28 @@ export default definePlugin({
         const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png?passthrough=false`);
         return url.toString();
     },
-    commands: [
-        {
-            name: "reload",
-            description: "Reloads fakeProfile",
-            options: [],
-            inputType: ApplicationCommandInputType.BOT,
-            execute: async (opts, ctx) => {
-                removeBadgesForAllUsers();
-                await loadfakeProfile(true);
-                addBadgesForAllUsers();
-                sendBotMessage(ctx.channel.id, { content: "fakeProfile successfully reloaded." });
-            },
-        },
-    ],
+    DecorationSection() {
+        if (!settings.store.enableAvatarDecorations) return;
+        return <CustomizationSection
+            title={"fakeProfile"}
+            hasBackground={true}
+            hideDivider={false}
+            className={cl("section-remove-margin")}
+        >
+            <Flex>
+                <Button
+                    onClick={async () => {
+                        removeBadgesForAllUsers();
+                        await loadfakeProfile(true);
+                        addBadgesForAllUsers();
+                    }}
+                    size={Button.Sizes.SMALL}
+                >
+                    Reload fakeProfile
+                </Button>
+            </Flex>
+        </CustomizationSection>;
+    },
     addCopy3y3Button: ErrorBoundary.wrap(function ({ primary, accent }: Colors) {
         return <Button
             onClick={() => {
