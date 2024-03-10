@@ -273,7 +273,10 @@ export default definePlugin({
             Toasts.show({
                 message: "There is an update available for the fakeProfile plugin.",
                 id: Toasts.genId(),
-                type: Toasts.Type.SUCCESS
+                type: Toasts.Type.MESSAGE,
+                options: {
+                    position: Toasts.Position.BOTTOM
+                }
             });
         }
     },
