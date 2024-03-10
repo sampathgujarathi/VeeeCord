@@ -15,17 +15,16 @@ import { Devs } from "@utils/constants";
 import { Margins } from "@utils/margins";
 import { copyWithToast } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByCodeLazy, findByPropsLazy } from "@webpack";
-import { Button, Forms, Tooltip, useEffect, useState } from "@webpack/common";
+import { findByCodeLazy } from "@webpack";
+import { Alerts, Button, Forms, Toasts, Tooltip, useEffect, useState } from "@webpack/common";
 import { User } from "discord-types/general";
 import virtualMerge from "virtual-merge";
 
-const { isAnimatedAvatarDecoration } = findByPropsLazy("isAnimatedAvatarDecoration");
+import { API_URL, BASE_URL, INVITE_KEY, SKU_ID } from "./constants";
 const CustomizationSection = findByCodeLazy(".customizationSectionBackground");
 const cl = classNameFactory("vc-decoration-");
 
 import style from "./index.css?managed";
-const SKU_ID = "100101099222224";
 
 type Badge = {
     id: string;
@@ -96,7 +95,7 @@ async function loadfakeProfile(noCache = false) {
     const init = {} as RequestInit;
     if (noCache)
         init.cache = "no-cache";
-    const response = await fetch("https://i.sampath.tech/v2/users/fakeProfile", init);
+    const response = await fetch(API_URL + "/fakeProfile", init);
     const data = await response.json();
     UsersData = data;
 }
@@ -129,10 +128,8 @@ function encode(primary: number, accent: number): string {
     return (padding || "") + " " + encoded;
 }
 
-// Courtesy of Cynthia.
 function decode(bio: string): Array<number> | null {
     if (bio == null) return null;
-
     const colorString = bio.match(
         /\u{e005b}\u{e0023}([\u{e0061}-\u{e0066}\u{e0041}-\u{e0046}\u{e0030}-\u{e0039}]+?)\u{e002c}\u{e0023}([\u{e0061}-\u{e0066}\u{e0041}-\u{e0046}\u{e0030}-\u{e0039}]+?)\u{e005d}/u,
     );
@@ -156,14 +153,12 @@ const settings = definePluginSettings({
     enableProfileEffects: {
         description: "Allows you to use profile effects",
         type: OptionType.BOOLEAN,
-        default: true,
-        restartNeeded: true
+        default: false
     },
     enableProfileThemes: {
         description: "Allows you to use profile themes",
         type: OptionType.BOOLEAN,
-        default: false,
-        restartNeeded: true
+        default: false
     },
     enableCustomBadges: {
         description: "Allows you to use custom badges",
@@ -174,8 +169,7 @@ const settings = definePluginSettings({
     enableAvatarDecorations: {
         description: "Allows you to use discord avatar decorations",
         type: OptionType.BOOLEAN,
-        default: false,
-        restartNeeded: true
+        default: false
     },
     showCustomBadgesinmessage: {
         description: "Show custom badges in message",
@@ -272,6 +266,18 @@ export default definePlugin({
                     <BadgeMain user={props.message?.author} wantTopMargin={true} />
                 </ErrorBoundary>
             );
+        }
+        const response = await fetch(BASE_URL + "/fakeProfile");
+        const data = await response.json();
+        if (data.version !== VERSION) {
+            await new Promise<void>(r => {
+                Alerts.show({
+                    title: "Update fakeProfile!",
+                    body: "There is an update available for the fakeProfile plugin.",
+                    confirmText: "Okay",
+                    onCancel: r
+                });
+            });
         }
     },
     stop() {
@@ -504,10 +510,21 @@ export default definePlugin({
                         removeBadgesForAllUsers();
                         await loadfakeProfile(true);
                         addBadgesForAllUsers();
+                        Toasts.show({
+                            message: "Updated fakeProfile badges!",
+                            id: Toasts.genId(),
+                            type: Toasts.Type.SUCCESS
+                        });
                     }}
                     size={Button.Sizes.SMALL}
                 >
                     Reload fakeProfile
+                </Button>
+                <Button
+                    size={Button.Sizes.SMALL}
+                    onClick={() => VencordNative.native.openExternal(`https://discord.gg/${INVITE_KEY}`)}
+                >
+                    Join Discord
                 </Button>
             </Flex>
         </CustomizationSection>;
