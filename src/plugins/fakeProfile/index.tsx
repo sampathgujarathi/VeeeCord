@@ -427,27 +427,29 @@ export default definePlugin({
         return user;
     },
     SKU_ID,
-    useUserAvatarDecoration(user?: User): { asset: string; skuId: string; } | null | undefined {
-        if (!user || !settings.store.enableAvatarDecorations) return;
-        const [AvatarDecoration, setAvatarDecoration] = useState<string | null>(
-            user ? UsersData[user.id]?.decoration ?? null : null
-        );
-
+    useUserAvatarDecoration(user?: User): { asset: string; skuId: string; } | null {
+        const [avatarDecoration, setAvatarDecoration] = useState<string | null>(null);
         useEffect(() => {
             const fetchUserAssets = async () => {
                 try {
-                    const userAssetsData = UsersData[user.id];
-                    if (userAssetsData?.decoration) {
-                        setAvatarDecoration(userAssetsData.decoration);
+                    if (user?.id) {
+                        const userAssetsData = UsersData[user.id];
+                        if (userAssetsData?.decoration) {
+                            setAvatarDecoration(userAssetsData.decoration);
+                        }
                     }
                 } catch (error) {
                     console.error("Error fetching user assets:", error);
                 }
             };
+
             fetchUserAssets();
         }, [user, UsersData]);
 
-        return AvatarDecoration ? { asset: AvatarDecoration, skuId: SKU_ID } : null;
+        if (!user || !settings.store.enableAvatarDecorations) {
+            return null;
+        }
+        return avatarDecoration ? { asset: avatarDecoration, skuId: SKU_ID } : null;
     },
     voiceBackgroundHook({ className, participantUserId }: any) {
         if (className.includes("tile_")) {
