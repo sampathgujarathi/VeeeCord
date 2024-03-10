@@ -20,7 +20,7 @@ import { Button, Forms, Toasts, Tooltip, useEffect, useState } from "@webpack/co
 import { User } from "discord-types/general";
 import virtualMerge from "virtual-merge";
 
-import { API_URL, BASE_URL, INVITE_KEY, SKU_ID } from "./constants";
+import { API_URL, BASE_URL, INVITE_KEY, SKU_ID, VERSION } from "./constants";
 const CustomizationSection = findByCodeLazy(".customizationSectionBackground");
 const cl = classNameFactory("vc-decoration-");
 
