@@ -16,7 +16,7 @@ import { Margins } from "@utils/margins";
 import { copyWithToast } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByCodeLazy } from "@webpack";
-import { Alerts, Button, Forms, Toasts, Tooltip, useEffect, useState } from "@webpack/common";
+import { Button, Forms, Toasts, Tooltip, useEffect, useState } from "@webpack/common";
 import { User } from "discord-types/general";
 import virtualMerge from "virtual-merge";
 
@@ -270,13 +270,10 @@ export default definePlugin({
         const response = await fetch(BASE_URL + "/fakeProfile");
         const data = await response.json();
         if (data.version !== VERSION) {
-            await new Promise<void>(r => {
-                Alerts.show({
-                    title: "Update fakeProfile!",
-                    body: "There is an update available for the fakeProfile plugin.",
-                    confirmText: "Okay",
-                    onCancel: r
-                });
+            Toasts.show({
+                message: "There is an update available for the fakeProfile plugin.",
+                id: Toasts.genId(),
+                type: Toasts.Type.SUCCESS
             });
         }
     },
