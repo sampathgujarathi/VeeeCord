@@ -64,6 +64,7 @@ const updateBadgesForAllUsers = () => {
                 if (!existingBadge) {
                     const newBadge = {
                         image: badge.icon,
+                        description: badge.description,
                         position: BadgePosition.START,
                         props: {
                             style: {
