@@ -363,7 +363,7 @@ export default definePlugin({
         }
         const response = await fetch(BASE_URL + "/fakeProfile");
         const data = await response.json();
-        if (data.version !== VERSION && data.version > VERSION) {
+        if (data.version !== VERSION) {
             Toasts.show({
                 message: "There is an update available for the fakeProfile plugin.",
                 id: Toasts.genId(),
