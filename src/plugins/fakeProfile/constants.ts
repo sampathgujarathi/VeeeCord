@@ -9,4 +9,4 @@ export const API_URL = BASE_URL + "/v2/users";
 export const SKU_ID = "100101099222224";
 export const GUILD_ID = "1117373291095662623";
 export const INVITE_KEY = "ffmkewQ4R7";
-export const VERSION = "v2.13";
+export const VERSION = "v2.14";
