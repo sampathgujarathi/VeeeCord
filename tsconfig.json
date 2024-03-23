@@ -11,7 +11,7 @@
             "esnext.asynciterable",
             "esnext.symbol"
         ],
-        "module": "commonjs",
+        "module": "esnext",
         "moduleResolution": "node",
         "strict": true,
         "noImplicitAny": false,
@@ -19,6 +19,9 @@
         "jsx": "preserve",
         "baseUrl": "./src/",
         "paths": {
+            "@main/*": [
+                "./main/*"
+            ],
             "@api/*": [
                 "./api/*"
             ],
@@ -27,6 +30,9 @@
             ],
             "@utils/*": [
                 "./utils/*"
+            ],
+            "@shared/*": [
+                "./shared/*"
             ],
             "@webpack/types": [
                 "./webpack/common/types"
@@ -40,6 +46,8 @@
         }
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "browser/**/*",
+        "scripts/**/*"
     ]
 }
