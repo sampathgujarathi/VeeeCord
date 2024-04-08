@@ -21,7 +21,7 @@ import { Button, Forms, Toasts, Tooltip, useEffect, useState } from "@webpack/co
 import { User } from "discord-types/general";
 import virtualMerge from "virtual-merge";
 
-import { API_URL, BASE_URL, SKU_ID, VERSION } from "./constants";
+import { API_URL, BASE_URL, SKU_ID, SKU_ID_DISCORD, VERSION } from "./constants";
 const CustomizationSection = findByCodeLazy(".customizationSectionBackground");
 const cl = classNameFactory("vc-decoration-");
 
@@ -50,6 +50,7 @@ interface UserProfileData {
     avatar: string;
     badges: Badge[];
     decoration: string;
+    skuId: string;
 }
 
 
@@ -139,6 +140,7 @@ const updateBadgesForAllUsers = () => {
         });
     });
 };
+
 
 async function loadfakeProfile(noCache = false) {
     try {
@@ -261,14 +263,14 @@ function fakeProfileSection({ hideTitle = false, hideDivider = false, noMargin =
                     await loadfakeProfile(true);
                     updateBadgesForAllUsers();
                     Toasts.show({
-                        message: "Updated fakeProfile!",
+                        message: "Successfully refetched fakeProfile!",
                         id: Toasts.genId(),
                         type: Toasts.Type.SUCCESS
                     });
                 }}
                 size={Button.Sizes.SMALL}
             >
-                Reload fakeProfile
+                Refetch fakeProfile
             </Button>
         </Flex>
     </CustomizationSection>;
@@ -559,30 +561,29 @@ export default definePlugin({
 
         return user;
     },
+    SKU_ID_DISCORD,
     SKU_ID,
     useUserAvatarDecoration(user?: User): { asset: string; skuId: string; } | null {
-        const [avatarDecoration, setAvatarDecoration] = useState<string | null>(null);
+        const [avatarDecoration, setAvatarDecoration] = useState<{ asset: string; skuId: string; } | null>(null);
         useEffect(() => {
             const fetchUserAssets = async () => {
                 try {
                     if (user?.id) {
                         const userAssetsData = UsersData[user.id];
                         if (userAssetsData?.decoration) {
-                            setAvatarDecoration(userAssetsData.decoration);
+                            setAvatarDecoration({ asset: userAssetsData.decoration, skuId: userAssetsData?.skuId });
                         }
                     }
                 } catch (error) {
                     console.error("Error fetching user assets:", error);
                 }
             };
-
             fetchUserAssets();
         }, [user, UsersData]);
-
         if (!user || !settings.store.enableAvatarDecorations) {
             return null;
         }
-        return avatarDecoration ? { asset: avatarDecoration, skuId: SKU_ID } : null;
+        return avatarDecoration ? { asset: avatarDecoration.asset, skuId: avatarDecoration.skuId } : null;
     },
     voiceBackgroundHook({ className, participantUserId }: any) {
         if (className.includes("tile_")) {
@@ -617,13 +618,36 @@ export default definePlugin({
     getAvatarDecorationURL({ avatarDecoration, canAnimate }: { avatarDecoration: AvatarDecoration | null; canAnimate?: boolean; }) {
         if (!avatarDecoration || !settings.store.enableAvatarDecorations) return;
         if (avatarDecoration && canAnimate) {
-            const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png`);
-            return url.toString();
+            if (avatarDecoration?.skuId === SKU_ID_DISCORD || avatarDecoration?.skuId !== SKU_ID_DISCORD && avatarDecoration?.skuId !== SKU_ID) {
+                const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png`);
+                return url.toString();
+            } else {
+                const url = new URL(`https://i.sampath.tech/avatar-decoration-presets/a_${avatarDecoration?.asset}.png`);
+                return url.toString();
+            }
+        } else if (avatarDecoration && !canAnimate) {
+            if (avatarDecoration?.skuId === SKU_ID_DISCORD || avatarDecoration?.skuId !== SKU_ID_DISCORD && avatarDecoration?.skuId !== SKU_ID) {
+                const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png?passthrough=false`);
+                return url.toString();
+            } else {
+                const url = new URL(`https://i.sampath.tech/avatar-decoration-presets/${avatarDecoration?.asset}.png`);
+                return url.toString();
+            }
         }
-        const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png?passthrough=false`);
-        return url.toString();
+
     },
     fakeProfileSection: ErrorBoundary.wrap(fakeProfileSection),
+    toolboxActions: {
+        async "Refetch fakeProfile"() {
+            await loadfakeProfile(true);
+            updateBadgesForAllUsers();
+            Toasts.show({
+                message: "Successfully refetched fakeProfile!",
+                id: Toasts.genId(),
+                type: Toasts.Type.SUCCESS
+            });
+        }
+    },
     addCopy3y3Button: ErrorBoundary.wrap(function ({ primary, accent }: Colors) {
         return <Button
             onClick={() => {
