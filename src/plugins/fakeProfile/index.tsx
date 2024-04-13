@@ -29,14 +29,21 @@ import style from "./index.css?managed";
 
 
 type Badge = {
-    id: string;
+    asset: string;
     description: string;
     icon: string;
     link?: string;
 };
+
+type DecorationData = {
+    asset: string;
+    skuId: string;
+    animated: boolean;
+};
 export interface AvatarDecoration {
     asset: string;
     skuId: string;
+    animated: boolean;
 }
 interface UserProfile extends User {
     profileEffectId: string;
@@ -49,8 +56,7 @@ interface UserProfileData {
     banner: string;
     avatar: string;
     badges: Badge[];
-    decoration: string;
-    skuId: string;
+    decoration: DecorationData;
 }
 
 
@@ -564,14 +570,14 @@ export default definePlugin({
     SKU_ID_DISCORD,
     SKU_ID,
     useUserAvatarDecoration(user?: User): { asset: string; skuId: string; } | null {
-        const [avatarDecoration, setAvatarDecoration] = useState<{ asset: string; skuId: string; } | null>(null);
+        const [avatarDecoration, setAvatarDecoration] = useState<{ asset: string; skuId: string; animated: boolean; } | null>(null);
         useEffect(() => {
             const fetchUserAssets = async () => {
                 try {
                     if (user?.id) {
                         const userAssetsData = UsersData[user.id];
                         if (userAssetsData?.decoration) {
-                            setAvatarDecoration({ asset: userAssetsData.decoration, skuId: userAssetsData?.skuId });
+                            setAvatarDecoration({ asset: userAssetsData.decoration?.asset, skuId: userAssetsData.decoration?.skuId, animated: userAssetsData.decoration?.animated });
                         }
                     }
                 } catch (error) {
@@ -617,23 +623,25 @@ export default definePlugin({
     },
     getAvatarDecorationURL({ avatarDecoration, canAnimate }: { avatarDecoration: AvatarDecoration | null; canAnimate?: boolean; }) {
         if (!avatarDecoration || !settings.store.enableAvatarDecorations) return;
-        if (avatarDecoration && canAnimate) {
-            if (avatarDecoration?.skuId === SKU_ID_DISCORD || avatarDecoration?.skuId !== SKU_ID_DISCORD && avatarDecoration?.skuId !== SKU_ID) {
-                const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png`);
-                return url.toString();
-            } else {
-                const url = new URL(`https://i.sampath.tech/avatar-decoration-presets/a_${avatarDecoration?.asset}.png`);
-                return url.toString();
-            }
-        } else if (avatarDecoration && !canAnimate) {
-            if (avatarDecoration?.skuId === SKU_ID_DISCORD || avatarDecoration?.skuId !== SKU_ID_DISCORD && avatarDecoration?.skuId !== SKU_ID) {
-                const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png?passthrough=false`);
-                return url.toString();
-            } else {
-                const url = new URL(`https://i.sampath.tech/avatar-decoration-presets/${avatarDecoration?.asset}.png`);
-                return url.toString();
-            }
+
+        let baseUrl: string;
+
+        if (avatarDecoration?.skuId === SKU_ID_DISCORD || avatarDecoration?.skuId !== SKU_ID) {
+            baseUrl = "https://cdn.discordapp.com/avatar-decoration-presets/";
+        } else if (avatarDecoration?.skuId === SKU_ID) {
+            baseUrl = "https://i.sampath.tech/avatar-decoration-presets/";
+        } else {
+            return;
         }
+        const assetPath = canAnimate && avatarDecoration?.animated === true ? `a_${avatarDecoration?.asset}.png` : `${avatarDecoration?.asset}.png`;
+
+        if (avatarDecoration?.skuId === SKU_ID_DISCORD && !canAnimate || avatarDecoration?.skuId !== SKU_ID && !canAnimate) {
+            baseUrl += `${assetPath}?passthrough=false`;
+        } else {
+            baseUrl += assetPath;
+        }
+
+        return new URL(baseUrl).toString();
 
     },
     fakeProfileSection: ErrorBoundary.wrap(fakeProfileSection),
