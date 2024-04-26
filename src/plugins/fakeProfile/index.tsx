@@ -440,7 +440,7 @@ export default definePlugin({
             }
         },
         {
-            find: ".USER_SETTINGS_PROFILE_THEME_ACCENT",
+            find: ".USER_SETTINGS_RESET_PROFILE_THEME",
             replacement: {
                 match: /RESET_PROFILE_THEME}\)(?<=color:(\i),.{0,500}?color:(\i),.{0,500}?)/,
                 replace: "$&,$self.addCopy3y3Button({primary:$1,accent:$2})"
