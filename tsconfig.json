@@ -20,7 +20,6 @@
         "jsx": "preserve",
         "baseUrl": "./src/",
         "paths": {
-<<<<<<< HEAD
             "@main/*": [
                 "./main/*"
             ],
@@ -45,18 +44,7 @@
             "@webpack": [
                 "./webpack/webpack"
             ]
-        }
-=======
-            "@main/*": ["./main/*"],
-            "@api/*": ["./api/*"],
-            "@components/*": ["./components/*"],
-            "@utils/*": ["./utils/*"],
-            "@shared/*": ["./shared/*"],
-            "@webpack/types": ["./webpack/common/types"],
-            "@webpack/common": ["./webpack/common"],
-            "@webpack": ["./webpack/webpack"]
         },
-
         "plugins": [
             // Transform paths in output .d.ts files (Include this line if you output declarations files)
             {
@@ -64,7 +52,6 @@
                 "afterDeclarations": true
             }
         ]
->>>>>>> dac2d7520d0b0f90c2ced2931eee67730b7159b9
     },
     "include": [
         "src/**/*",
