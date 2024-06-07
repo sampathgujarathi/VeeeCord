@@ -26,38 +26,9 @@ const CustomizationSection = findByCodeLazy(".customizationSectionBackground");
 const cl = classNameFactory("vc-decoration-");
 
 import style from "./index.css?managed";
+import { AvatarDecoration, Colors, fakeProfileSectionProps, UserProfile, UserProfileData } from "./types";
 
 
-type Badge = {
-    asset: string;
-    description: string;
-    icon: string;
-    link?: string;
-};
-
-type DecorationData = {
-    asset: string;
-    skuId: string;
-    animated: boolean;
-};
-export interface AvatarDecoration {
-    asset: string;
-    skuId: string;
-    animated: boolean;
-}
-interface UserProfile extends User {
-    profileEffectId: string;
-    userId: string;
-    themeColors?: Array<number>;
-
-}
-interface UserProfileData {
-    profile_effect: string;
-    banner: string;
-    avatar: string;
-    badges: Badge[];
-    decoration: DecorationData;
-}
 
 
 let UsersData = {} as Record<string, UserProfileData>;
@@ -163,16 +134,9 @@ async function loadfakeProfile(noCache = false) {
 }
 
 function getUserEffect(profileId: string) {
-    const userEffect = UsersData[profileId];
-    if (userEffect) {
-        return UsersData[profileId].profile_effect || null;
-    }
-    return null;
+    return UsersData[profileId] ? UsersData[profileId].profile_effect : null;
 }
-interface Colors {
-    primary: number;
-    accent: number;
-}
+
 
 function encode(primary: number, accent: number): string {
     const message = `[#${primary.toString(16).padStart(6, "0")},#${accent.toString(16).padStart(6, "0")}]`;
@@ -251,11 +215,7 @@ const settings = definePluginSettings({
     }
 });
 
-interface fakeProfileSectionProps {
-    hideTitle?: boolean;
-    hideDivider?: boolean;
-    noMargin?: boolean;
-}
+
 function fakeProfileSection({ hideTitle = false, hideDivider = false, noMargin = false }: fakeProfileSectionProps) {
     return <CustomizationSection
         title={!hideTitle && "fakeProfile"}
@@ -349,7 +309,7 @@ const BadgeMain = ({ user, wantMargin = true, wantTopMargin = false }: { user: U
     const validBadges = UsersData[user.id]?.badges;
     if (!validBadges || validBadges.length === 0) return null;
 
-    const icons = validBadges.map((badge: Badge, index: number) => (
+    const icons = validBadges.map((badge, index) => (
         <div onClick={openModalOnClick} >
             <BadgeIcon
                 key={index}
@@ -387,7 +347,7 @@ export default definePlugin({
     description: "Unlock Discord profile effects, themes, avatar decorations, and custom badges without the need for Nitro.",
     authors: [Devs.Sampath, Devs.Alyxia, Devs.Remty, Devs.AutumnVN, Devs.pylix, Devs.TheKodeToad],
     dependencies: ["MessageDecorationsAPI"],
-    async start() {
+    start: async () => {
         enableStyle(style);
         await loadfakeProfile();
         if (settings.store.enableCustomBadges) {
@@ -419,7 +379,7 @@ export default definePlugin({
             }
         }, data.reloadInterval);
     },
-    stop() {
+    stop: () => {
         if (settings.store.showCustomBadgesinmessage) {
             removeDecoration("custom-badge");
         }
@@ -467,6 +427,19 @@ export default definePlugin({
                 {
                     match: /\?\(0,\i\.jsx\)\(\i,{type:\i,shown/,
                     replace: "&&$self.shouldShowBadge(arguments[0])$&"
+                }
+            ]
+        },
+        {
+            find: /overrideBannerSrc:\i,overrideBannerWidth:/,
+            replacement: [
+                {
+                    match: /(\i)\.premiumType/,
+                    replace: "$self.premiumHook($1)||$&"
+                },
+                {
+                    match: /function \i\((\i)\)\{/,
+                    replace: "$&$1.overrideBannerSrc=$self.useBannerHook($1);"
                 }
             ]
         },
