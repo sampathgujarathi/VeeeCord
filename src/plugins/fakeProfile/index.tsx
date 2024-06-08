@@ -52,7 +52,7 @@ const updateBadgesForAllUsers = () => {
                                 transform: "scale(0.9)"
                             }
                         },
-                        shouldShow: user => user.user.id === userId,
+                        shouldShow: userInfo => userInfo.userId === userId,
                         onClick() {
                             const modalKey = openModal(props => (
                                 <ErrorBoundary noop onError={() => {
@@ -421,27 +421,25 @@ export default definePlugin({
                     replace: "$self.premiumHook($1)||$&"
                 },
                 {
-                    match: /(?<=function \i\((\i)\)\{)(?=var.{30,50},bannerSrc:)/,
-                    replace: "$1.bannerSrc=$self.useBannerHook($1);"
-                },
-                {
                     match: /\?\(0,\i\.jsx\)\(\i,{type:\i,shown/,
                     replace: "&&$self.shouldShowBadge(arguments[0])$&"
                 }
             ]
         },
         {
-            find: /overrideBannerSrc:\i,overrideBannerWidth:/,
-            replacement: [
-                {
-                    match: /(\i)\.premiumType/,
-                    replace: "$self.premiumHook($1)||$&"
-                },
-                {
-                    match: /function \i\((\i)\)\{/,
-                    replace: "$&$1.overrideBannerSrc=$self.useBannerHook($1);"
-                }
-            ]
+            find: "=!1,canUsePremiumCustomization:",
+            replacement: {
+                match: /(\i)\.premiumType/,
+                replace: "$self.premiumHook($1)||$&"
+            }
+        },
+        {
+            find: "BannerLoadingStatus:function",
+            replacement: {
+                match: /(?<=void 0:)\i.getPreviewBanner\(\i,\i,\i\)/,
+                replace: "$self.useBannerHook(arguments[0])||$&"
+
+            }
         },
         {
             find: "\"data-selenium-video-tile\":",
@@ -588,9 +586,9 @@ export default definePlugin({
         }
     },
 
-    useBannerHook({ displayProfile, user }: any) {
+    useBannerHook({ displayProfile }: any) {
         if (displayProfile?.banner && settings.store.nitroFirst) return;
-        if (UsersData[user.id] && UsersData[user.id].banner) return UsersData[user.id].banner;
+        if (UsersData[displayProfile?.userId] && UsersData[displayProfile?.userId].banner) return UsersData[displayProfile?.userId].banner;
     },
 
     premiumHook({ userId }: any) {
