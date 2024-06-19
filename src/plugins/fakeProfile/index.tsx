@@ -434,7 +434,7 @@ export default definePlugin({
             }
         },
         {
-            find: "BannerLoadingStatus:function",
+            find: ".banner)==null",
             replacement: {
                 match: /(?<=void 0:)\i.getPreviewBanner\(\i,\i,\i\)/,
                 replace: "$self.useBannerHook(arguments[0])||$&"
@@ -486,7 +486,7 @@ export default definePlugin({
             find: "renderAvatarWithPopout(){",
             replacement: [
                 {
-                    match: /(?<=getAvatarDecorationURL\)\({avatarDecoration:)(\i).avatarDecoration(?=,)/,
+                    match: /(?<=\)\({(?:(?:.(?!\)}))*,)?avatarDecoration:)(\i)\.avatarDecoration(?=,|}\))/,
                     replace: "$self.useUserAvatarDecoration($1)??$&"
                 }
             ]
