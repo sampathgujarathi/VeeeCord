@@ -415,16 +415,10 @@ export default definePlugin({
         },
         {
             find: ".NITRO_BANNER,",
-            replacement: [
-                {
-                    match: /(\i)\.premiumType/,
-                    replace: "$self.premiumHook($1)||$&"
-                },
-                {
-                    match: /\?\(0,\i\.jsx\)\(\i,{type:\i,shown/,
-                    replace: "&&$self.shouldShowBadge(arguments[0])$&"
-                }
-            ]
+            replacement: {
+                match: /\?\(0,\i\.jsx\)\(\i,{type:\i,shown/,
+                replace: "&&$self.shouldShowBadge(arguments[0])$&"
+            }
         },
         {
             find: "=!1,canUsePremiumCustomization:",
